@@ -1,0 +1,163 @@
+# Default values for vstream.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## vstream-watcher container configuration
+##
+vstreamWatcher:
+
+  ## Kubernetes container runtime, one of: "containerd", "cri-o", "docker"
+  ##
+  ## Note: One way of determining the container runtime used by a given
+  ## Kubernetes cluster is to run the command 'kubectl get nodes -o wide'
+  ## and inspect the 'CONTAINER-RUNTIME' column.
+  ##
+  containerRuntime: "containerd"
+
+  ## Label filter configuration
+  ##
+  ## Label filtering can be used to select which pods the vSTREAM
+  ## monitors on each of its available interfaces by matching specified
+  ## labels against labels applied to pods.
+  ##
+  ## The label filter format is as follows:
+  ##
+  ##   <ifn>: [<key>=value[,<key>=value]]
+  ##   <ifn>: [disable]
+  ##
+  ## Example:
+  ##
+  ##   if3: app=test
+  ##   if4: app=test,owner=bob
+  ##   if5:
+  ##   if6: disable
+  ##
+  ## If an interface is configured with one or more comma separated
+  ## labels, the vSTREAM will only monitor pods whose labels match ALL
+  ## of the specified filter labels.
+  ##
+  ## If an interface is not specified, or an interface is configured
+  ## without any labels, ANY pod on the node may be selected for
+  ## monitoring.
+  ##
+  ## If an interface is configured with the value "disable", NO pods
+  ## will be matched/monitored on that interface.
+  ##
+  ## If an interface contains an incorrectly formatted label, NO pods
+  ## will be matched/monitored on that interface and an error message
+  ## will be generated in the logs.
+  ##
+  labelFilters: |
+    # Label filter format:
+    #   <ifn>: [<key>=value[,<key>=value]]
+    #   <ifn>: [disable]
+    if3:
+    if4:
+    if5:
+    if6:
+
+  ## General settings
+  ##
+  ## For diagnostic use.
+  ##
+  generalSettings: |
+    ## Log level
+    ##
+    logLevel=2
+
+## vstream-asi container configuration
+##
+vstreamAsi:
+
+  ## nsagent_config.cfg values
+  nsagent:
+    nscommPort: 395
+    nsconsolePort: 1501
+    httpPort: 8080
+    httpsPort: 8443
+    mgmtInf: eth0
+    nsconfigServerIp: 192.168.161.66
+    xdrstoreSize: 1000
+    pktstoreSize: 0
+    numCpus: 2
+    numFwdCpus: 0
+    memSize: 2048
+
+  ## CONFMAP_OVER_LOCAL environment variable
+  ##
+  ## If true, the values found in the vstream-asi ConfigMap will take
+  ## precedent over the those in the config volume.  See the vSTREAM
+  ## Installation Guide for details.
+  ##
+  confmapOverLocal: true
+
+  ## Compute resources for the vstream-asi container
+  ##
+  ## See the daemonset.spec.template.spec.containers.resources
+  ## documentation for details.
+  ##
+  resources:
+    requests:
+      cpu: 2
+
+## Daemonset configuration
+##
+daemonset:
+
+  ## Daemonset's container's securityContext settings
+  ##
+  ## If privileged is set to 'true', the daemonset's pod's containers
+  ## will run in privileged mode.
+  ##
+  ## Otherwise if privileged is set to 'false', the daemonset's pod's
+  ## containers will use the following capabilities list:
+  ## - NET_ADMIN
+  ## - NET_RAW
+  ## - SYS_ADMIN
+  ## - SYS_PTRACE
+  ##
+  ## Additionally, if privileged is set to 'false' and if
+  ## 'vstreamWatcher.containerRuntime' is set to "cri-o", then the
+  ## daemonset will be configured with "hostPID: true" as well.
+  ##
+  ## Note that unless privileged is set to 'true' here, other pods with
+  ## privileged settings may not be able to be monitored.
+  ##
+  privileged: false
+
+  ## vstream-asi container image name
+  ##
+  vstreamAsiImage: vstream.local:5000/vstream-asi:6.3.5-3184
+
+  ## vstream-watcher container image name
+  ##
+  vstreamWatcherImage: vstream.local:5000/vstream-watcher:6.3.5-3184
+
+  ## Optional list of references to secrets to use when pulling container images
+  ##
+  ## See the daemonset.spec.template.spec.imagePullSecrets
+  ## documentation for details on usage and format.
+  ##
+  ## Note that any secrets, if needed, are not created by this chart and
+  ## should be created elsewhere.
+  ##
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+
+  ## Image pull policy for both the vstream-asi and vstream-watcher
+  ## containers
+  ##
+  ## One of Always, Never, IfNotPresent.
+  ##
+  ## See the daemonset.spec.template.spec.containers.imagePullPolicy
+  ## documentation for details.
+  imagePullPolicy: Always
+
+  ## Daemonset updateStrategy
+  ##
+  ## Unless configured, uses the default Kubernetes update strategy
+  ## (RollingUpdate). See the daemonset.spec.updateStrategy
+  ## documentation for details on usage and format.
+  ##
+  updateStrategy: {}
+
